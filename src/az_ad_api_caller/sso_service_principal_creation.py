@@ -21,8 +21,8 @@ def sso_service_principal_creation ():
         "displayName": config['service_principal_name']
     }
     # This is the default application template recommanded by MS
-    template_id = "8adf8e6e-67b2-4cf2-a259-e3dc5476c621"
-    sp_endpoint = "https://graph.microsoft.com/beta/applicationTemplates/{}/instantiate".format(template_id)
+    template_id   = "8adf8e6e-67b2-4cf2-a259-e3dc5476c621"
+    sp_endpoint   = "https://graph.microsoft.com/beta/applicationTemplates/{}/instantiate".format(template_id)
     sp_graph_data = requests.post(
         sp_endpoint,
         headers=headers,
