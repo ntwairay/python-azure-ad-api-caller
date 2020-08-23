@@ -1,6 +1,0 @@
-adal
-pytz
-requests
-azure-functions
-azure-functions-worker
-msal
