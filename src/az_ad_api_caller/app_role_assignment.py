@@ -9,8 +9,38 @@ import msal
 from config import config
 from authentication import authentication
 
+# Assign app role to user and group
+def assign_app_role_to_principal (which, principal_id, headers, app_role_assignment_data):
+    # Calling graph to do approle assignment using the access token
+    app_role_assignment_endpoint = "https://graph.microsoft.com/v1.0/{}/{}/appRoleAssignments".format(which,principal_id)
+    logging.info("App Role assignment details:")
+    logging.info(app_role_assignment_data)
+    ar_assignment_graph_data = requests.post(
+        app_role_assignment_endpoint,
+        headers=headers,
+        data=json.dumps(app_role_assignment_data))
+    ar_assignment_graph_data.raise_for_status()
+    logging.info("AppRole assignment for {} {} is completed".format(which,principal_id))
 
-def app_role_assignment ():
+# Delete app role from user and gorup
+def delete_app_role_from_principal (app_role_id, principal_id, headers, sp_object_id):
+    # Calling graph to get approle assignment id from the service principal using the access token
+    app_role_assignment_endpoint = "https://graph.microsoft.com/v1.0/servicePrincipals/{}/appRoleAssignedTo".format(sp_object_id)
+    # Getting assigned_id
+    ar_assignment_graph_data = requests.get(
+        app_role_assignment_endpoint,
+        headers=headers)
+    assigned_to_list = ar_assignment_graph_data.json()['value']
+    assigned_to_id   = [at for at in assigned_to_list if (at['principalId'] == principal_id and at['appRoleId']== app_role_id) ]
+    # Calling graph to delete approle assignment using the access token
+    app_role_assignment_endpoint = "https://graph.microsoft.com/v1.0/servicePrincipals/{}/appRoleAssignedTo/{}".format(sp_object_id, assigned_to_id[0]['id'])
+    ar_assignment_graph_data = requests.delete(
+        app_role_assignment_endpoint,
+        headers=headers)
+    ar_assignment_graph_data.raise_for_status()
+    logging.info("AppRole Deletion for {} is completed".format(principal_id))
+
+def app_role_assignment (action):
     result = authentication()
     # Calling graph to get service principal object Id using the access token
     headers       = {'Authorization': 'Bearer ' + result['access_token']}
@@ -53,31 +83,27 @@ def app_role_assignment ():
     logging.info("App Role object ID is {}".format(app_role_id))
 
     #  Assigning pricinipal id, group object id is always the first priority
-    if group_object_id:
+    if config['group_principal_name']:
         principal_id = group_object_id
         which        = "groups"
-    elif user_object_id:
+    elif config['user_principal_name']:
         principal_id = user_object_id
         which        = "users"
     else:
         logging.error("Group and User object id is empty")
 
-    # Calling graph to do approle assignment using the access token
-    app_role_assignment_endpoint = "https://graph.microsoft.com/v1.0/{}/{}/appRoleAssignments".format(which,principal_id)
-    app_role_assignment_data     =  {
-      "principalId": principal_id,
-      "resourceId": sp_object_id, # the ip inside the approle for each role
-      "appRoleId": app_role_id
-    }
-    logging.info("App Role assignment details:")
-    logging.info(app_role_assignment_data)
-    ar_assignment_graph_data = requests.post(
-        app_role_assignment_endpoint,
-        headers=headers,
-        data=json.dumps(app_role_assignment_data))
-    ar_assignment_graph_data.raise_for_status()
-    logging.info("AppRole assignment for {} {} is completed".format(which,principal_id))
-
+    if action == "add":
+        app_role_assignment_data     =  {
+          "principalId": principal_id,
+          "resourceId": sp_object_id, # the ip inside the approle for each role
+          "appRoleId": app_role_id
+        }
+        assign_app_role_to_principal(which, principal_id, headers, app_role_assignment_data)
+    else:
+        delete_app_role_from_principal(app_role_id, principal_id, headers, sp_object_id)
 
 if __name__ == '__main__':
-    app_role_assignment()
+    if str(sys.argv[1]).lower() == 'add' or str(sys.argv[1]).lower() == "delete":
+        app_role_assignment(str(sys.argv[1]))
+    else:
+        logging.error('The first argument has to be Add or Delete')
