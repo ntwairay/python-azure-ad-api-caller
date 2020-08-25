@@ -15,6 +15,25 @@ with Single Sign On enable due to graph api issue. Therefore this repository wil
 - . env/bin/activate
 - pip3 install -r requirements.txt
 
+## API permission of the Application (Delegated) ##
+
+| Permission type             | Permissions (from least to most privileged)                                                                 |
+| --------------------------- |:-----------------------------------------------------------------------------:|
+| Delegated (work or school account)	     | User.ReadWrite.All                |
+| Delegated (work or school account)	     | Group.ReadWrite.All               |
+| Delegated (work or school account)       | Application.ReadWrite.All         |
+| Delegated (work or school account)       | AppRoleAssignment.ReadWrite.All   |
+
+
+## API permission of the Application (Application) ##
+User.ReadWrite.All, Directory.ReadWrite.All
+| Permission type             | Permissions (from least to most privileged)                                                                 |
+| --------------------------- |:-----------------------------------------------------------------------------:|
+| Application	                | User.ReadWrite.All                |
+| Application	                | Group.ReadWrite.All               |
+| Application                 | AppRoleAssignment.ReadWrite.All   |
+| Application                 | Application.ReadWrite.All         |
+
 ## Quick start
 ### App role assignment
 1. Export the environnment variables which are in env.sh.tpl
